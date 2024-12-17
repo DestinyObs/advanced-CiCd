@@ -1,0 +1,18 @@
+# Terraform folders
+.terraform/
+.terraform.lock.hcl
+
+# Terraform state files
+terraform.tfstate
+terraform.tfstate.backup
+
+# Ignore variables (if sensitive)
+*.tfvars
+
+# Logs and temporary files
+*.log
+*.bak
+*.tmp
+
+# Inventory or generated files
+inventory

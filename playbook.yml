@@ -1,0 +1,99 @@
+---
+- name: Configure Jenkins and Docker
+  hosts: all
+  become: true
+  tasks:
+    - name: Install Java (required for Jenkins)
+      yum:
+        name: java-11-openjdk
+        state: present
+      register: java_install
+    - name: Check Java installation
+      shell: java -version
+      register: java_version
+      failed_when: java_version.rc != 0
+      changed_when: false
+      tags: jenkins
+
+    - name: Install Jenkins
+      shell: |
+        wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo
+        rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io.key
+        yum install -y jenkins
+      tags: jenkins
+      register: jenkins_install
+    - name: Check Jenkins installation
+      shell: systemctl status jenkins
+      register: jenkins_status
+      failed_when: jenkins_status.rc != 0
+      changed_when: false
+      tags: jenkins
+
+    - name: Start and enable Jenkins service
+      service:
+        name: jenkins
+        state: started
+        enabled: true
+      tags: jenkins
+      register: jenkins_service
+    - name: Check Jenkins service
+      shell: systemctl is-active jenkins
+      register: jenkins_service_status
+      failed_when: jenkins_service_status.stdout != "active"
+      changed_when: false
+      tags: jenkins
+
+    - name: Install Docker on agents
+      yum:
+        name: docker
+        state: present
+      when: "'agent' in inventory_hostname"
+      register: docker_install
+    - name: Check Docker installation
+      shell: docker --version
+      when: "'agent' in inventory_hostname"
+      register: docker_version
+      failed_when: docker_version.rc != 0
+      changed_when: false
+      tags: docker
+
+    - name: Start and enable Docker
+      service:
+        name: docker
+        state: started
+        enabled: true
+      when: "'agent' in inventory_hostname"
+      register: docker_service
+    - name: Check Docker service
+      shell: systemctl is-active docker
+      when: "'agent' in inventory_hostname"
+      register: docker_service_status
+      failed_when: docker_service_status.stdout != "active"
+      changed_when: false
+      tags: docker
+
+    - name: Add user to Docker group
+      user:
+        name: ec2-user
+        groups: docker
+        append: yes
+      when: "'agent' in inventory_hostname"
+      register: docker_group
+    - name: Verify user added to Docker group
+      shell: groups ubuntu | grep docker
+      when: "'agent' in inventory_hostname"
+      register: docker_group_check
+      failed_when: docker_group_check.rc != 0
+      changed_when: false
+      tags: docker
+
+    - name: Wait for Jenkins to become available
+      uri:
+        url: "http://localhost:8080"
+        status_code: 200
+      retries: 10
+      delay: 15
+      register: result
+      until: result.status == 200
+      tags: jenkins
+      register: jenkins_available
