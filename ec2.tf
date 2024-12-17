@@ -1,18 +1,10 @@
-data "aws_ami" "amazon_linux" {
-  most_recent = true
-  owners      = ["amazon"]
-
-  filter {
-    name   = "name"
-    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
-  }
-}
-
 resource "aws_instance" "jenkins_master" {
-  ami                    = data.aws_ami.amazon_linux.id
-  instance_type          = var.instance_type
-  vpc_security_group_ids = [aws_security_group.jenkins_sg.id]
-  subnet_id              = aws_subnet.main[0].id  # Updated to use the first subnet in the list
+  ami                         = var.my_ami
+  instance_type               = var.instance_type
+  vpc_security_group_ids      = [aws_security_group.jenkins_sg.id]
+  subnet_id                   = aws_subnet.main[0].id
+  associate_public_ip_address = true
+  key_name                    = "CV-build"  # Replace with your key pair name
 
   tags = {
     Name = "Jenkins Master"
@@ -22,10 +14,12 @@ resource "aws_instance" "jenkins_master" {
 }
 
 resource "aws_instance" "jenkins_agent" {
-  ami                    = data.aws_ami.amazon_linux.id
-  instance_type          = var.instance_type
-  vpc_security_group_ids = [aws_security_group.jenkins_sg.id]
-  subnet_id              = aws_subnet.main[1].id  # Updated to use the second subnet in the list
+  ami                         = var.my_ami
+  instance_type               = var.instance_type
+  vpc_security_group_ids      = [aws_security_group.jenkins_sg.id]
+  subnet_id                   = aws_subnet.main[1].id
+  associate_public_ip_address = true
+  key_name                    = "CV-build"  # Replace with your key pair name
 
   tags = {
     Name = "Jenkins Agent"

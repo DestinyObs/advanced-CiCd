@@ -13,7 +13,7 @@ variable "subnet_cidrs" {
 variable "availability_zones" {
   description = "The availability zones for the subnets"
   type        = list(string)
-  default     = ["us-west-2a", "us-west-2b"]  # Change based on your region
+  default     = ["us-west-2a", "us-west-2b"]
 }
 
 variable "aws_region" {
@@ -32,4 +32,9 @@ variable "eks_cluster_name" {
   description = "The name of the EKS cluster"
   type        = string
   default     = "eks-cluster"
+}
+
+variable "my_ami" {
+  description = "The AMI ID for the instances"
+  type        = string
 }
